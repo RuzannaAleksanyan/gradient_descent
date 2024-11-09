@@ -13,6 +13,7 @@ import numpy as np
 def gradient(x, A, b):
     return np.dot(A, x) + b
 
+# A = 1/2(Ax, x) + (b, x)
 def f(x, A, b):
     return 0.5 * np.dot(x.T, np.dot(A, x)) + np.dot(b.T, x)
 
@@ -22,31 +23,29 @@ def gradient_descent(A, b, x0, n, epsilon, epsilon0, method='standard'):
     max_iterations = 10000
     
     while k < max_iterations:
-        grad = gradient(x, A, b)  # Compute the gradient
-        h_k = -grad  # Descent direction
+        grad = gradient(x, A, b)
+        h_k = -grad  
 
         if np.linalg.norm(grad) < epsilon0:
             break
 
-        # Calculate the numerator and denominator for alpha_k
         numerator = np.dot(grad, h_k)  # f'(x^k)h^k
         denominator = np.dot(np.dot(A, h_k), h_k)  # (Ah^k, h^k)
 
-        # Calculate the learning rate alpha_k
-        if denominator == 0:  # Prevent division by zero
-            alpha = 1e-10  # or any small value to avoid division by zero
-        else:
-            alpha = numerator / denominator
+        if method == 'standart':
+            alpha = 1 / (1 + k)
 
-        # Update x based on the learning method
-        if method == 'standard':
-            x = x + alpha * h_k  # Standard update
-        elif method == 'momentum':
-            # Momentum update (not applicable here as we directly use h_k)
-            raise NotImplementedError("Momentum method is not applicable with variable learning rate.")
-        elif method == 'nesterov':
-            # Nesterov update (not applicable here as we directly use h_k)
-            raise NotImplementedError("Nesterov method is not applicable with variable learning rate.")
+        if method == 'fastest_descent_mode': 
+            if denominator == 0: 
+                alpha = 1e-10 
+            else:
+                alpha = numerator / denominator
+
+        if method == 'sharing':
+            # ????
+            alpha = 1
+
+        x = x + alpha * h_k 
 
         k += 1
     
@@ -92,30 +91,42 @@ def input_matrix(n):
     return A
 
 def input_vector(n):
-    print(f"Enter the values for a vector of length {n}:")
+    print(f"Enter the values for a vector of length {n} (negative values allowed):")
     while True:
         try:
+            # Split input into a list of floats
             vector = list(map(float, input("Vector: ").split()))
+            # Check if the length matches the expected size
             if len(vector) != n:
                 print(f"Error: The vector must contain exactly {n} elements.")
                 continue
+            # Return the vector as a numpy array
             return np.array(vector)
         except ValueError:
+            # Handle non-numeric input
             print("Error: Please enter valid numerical values.")
+
 
 # Main execution
 if __name__ == "__main__":
     n = int(input("Enter the size of the matrix A (n): "))
     A = input_matrix(n)  # User inputs the matrix
     b = input_vector(n)   # User inputs the vector
-    x0 = np.zeros(n)      # Initial guess (could also be user-defined)
+    x0 = np.zeros(n)      # A one-dimensional array of length n
     epsilon = 1e-6        # Convergence tolerance
     epsilon0 = 1e-6       # Gradient tolerance
 
-    x, steps = gradient_descent(A, b, x0, n, epsilon, epsilon0, method='standard')
+    fastest_descent_mode_x, fastest_descent_mode_steps = gradient_descent(A, b, x0, n, epsilon, epsilon0, method='fastest_descent_mode')
+
+    standart_x, standart_steps = gradient_descent(A, b, x0, n, epsilon, epsilon0, method='standart')
+
+    sharing_x, sharing_steps = gradient_descent(A, b, x0, n, epsilon, epsilon0, method='sharing')
 
     # True minimum point
     x_star = -np.linalg.inv(A).dot(b)
 
-    print(f'Gradient Descent: x = {x}, steps = {steps}')
-    print(f'True minimum point: x* = {x_star}')
+    print(f'Gradient descent by standard method: x = {fastest_descent_mode_x}, steps = {fastest_descent_mode_steps}')
+    print(f'Gradient descent by fastest descent method: x = {standart_x}, steps = {standart_steps}')
+    print(f'Gradient descent by sharing method: x = {sharing_x}, steps = {sharing_steps}')
+
+    # print(f'True minimum point: x* = {x_star}')
