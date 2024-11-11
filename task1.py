@@ -17,39 +17,38 @@ def gradient(x, A, b):
 def f(x, A, b):
     return 0.5 * np.dot(x.T, np.dot(A, x)) + np.dot(b.T, x)
 
-def gradient_descent(A, b, x0, n, epsilon, epsilon0, method='standard'):
+def gradient_descent(A, b, x0, epsilon, epsilon0, method='standard'):
     x = x0
     k = 0
     max_iterations = 10000
     
-    while k < max_iterations:
+    while k < max_iterations: 
         grad = gradient(x, A, b)
-        h_k = -grad  
+        h_k = -grad  # descent direction
 
+        # Stop condition
         if np.linalg.norm(grad) < epsilon0:
             break
 
-        numerator = np.dot(grad, h_k)  # f'(x^k)h^k
-        denominator = np.dot(np.dot(A, h_k), h_k)  # (Ah^k, h^k)
-
-        if method == 'standart':
+        if method == 'standard':
             alpha = 1 / (1 + k)
 
-        if method == 'fastest_descent_mode': 
-            if denominator == 0: 
-                alpha = 1e-10 
-            else:
-                alpha = numerator / denominator
+        elif method == 'fastest_descent':
+            numerator = np.dot(grad, h_k)
+            denominator = np.dot(np.dot(A, h_k), h_k)
+            alpha = numerator / denominator if denominator != 0 else 1e-10
 
-        if method == 'sharing':
-            # ????
+        elif method == 'sharing':
             alpha = 1
+            while f(x + alpha * h_k, A, b) > f(x, A, b) - epsilon * alpha * np.linalg.norm(grad)**2:
+                alpha *= 0.5
 
-        x = x + alpha * h_k 
+        x = x + alpha * h_k  # Update the point
 
         k += 1
     
     return x, k
+
 
 def is_symmetric(matrix):
     return np.array_equal(matrix, matrix.T)
@@ -116,17 +115,61 @@ if __name__ == "__main__":
     epsilon = 1e-6        # Convergence tolerance
     epsilon0 = 1e-6       # Gradient tolerance
 
-    fastest_descent_mode_x, fastest_descent_mode_steps = gradient_descent(A, b, x0, n, epsilon, epsilon0, method='fastest_descent_mode')
+    standard_x, standart_steps = gradient_descent(A, b, x0, epsilon, epsilon0, method='standard')
 
-    standart_x, standart_steps = gradient_descent(A, b, x0, n, epsilon, epsilon0, method='standart')
+    fastest_descent_x, fastest_descent_steps = gradient_descent(A, b, x0, epsilon, epsilon0, method='fastest_descent')
 
-    sharing_x, sharing_steps = gradient_descent(A, b, x0, n, epsilon, epsilon0, method='sharing')
+    sharing_x, sharing_steps = gradient_descent(A, b, x0, epsilon, epsilon0, method='sharing')
 
     # True minimum point
     x_star = -np.linalg.inv(A).dot(b)
 
-    print(f'Gradient descent by standard method: x = {fastest_descent_mode_x}, steps = {fastest_descent_mode_steps}')
-    print(f'Gradient descent by fastest descent method: x = {standart_x}, steps = {standart_steps}')
+    print(f'Gradient descent by standard method: x = {fastest_descent_x}, steps = {fastest_descent_steps}')
+    print(f'Gradient descent by fastest descent method: x = {standard_x}, steps = {standart_steps}')
     print(f'Gradient descent by sharing method: x = {sharing_x}, steps = {sharing_steps}')
 
-    # print(f'True minimum point: x* = {x_star}')
+    print(f'True minimum point: x* = {x_star}')
+
+    print(".........................................................")
+
+    # Optional: Calculate distances to true minimum
+    distance_standard = np.linalg.norm(standard_x - x_star)
+    distance_fastest_descent = np.linalg.norm(fastest_descent_x - x_star)
+    distance_sharing = np.linalg.norm(sharing_x - x_star)
+
+    # Print distances to the true minimum
+    print(f'Distance between standard descent solution and x*: {distance_standard}')
+    print(f'Distance between fastest descent solution and x*: {distance_fastest_descent}')
+    print(f'Distance between sharing descent solution and x*: {distance_sharing}')
+
+
+    # # True minimum point
+    # x_star = -np.linalg.inv(A).dot(b)
+
+    # distance_standard = np.linalg.norm(standart_x - x_star)
+    # distance_fastest_descent = np.linalg.norm(fastest_descent_x - x_star)
+    # distance_sharing = np.linalg.norm(sharing_x - x_star)
+
+    # # Print the comparison results
+    # print(f'Distance between standard descent solution and x*: {distance_standard}')
+    # print(f'Distance between fastest descent solution and x*: {distance_fastest_descent}')
+    # print(f'Distance between sharing descent solution and x*: {distance_sharing}')
+    
+    # # Find the closest solution to x_star
+    # if distance_fastest_descent < distance_standard and distance_fastest_descent < distance_sharing:
+    #     closest_solution = "Fastest Descent"
+    #     closest_value = fastest_descent_x
+    #     min_distance = distance_fastest_descent
+    # elif distance_standard < distance_fastest_descent and distance_standard < distance_sharing:
+    #     closest_solution = "Standard Descent"
+    #     closest_value = standart_x
+    #     min_distance = distance_standard
+    # else:
+    #     closest_solution = "Sharing Descent"
+    #     closest_value = sharing_x
+    #     min_distance = distance_sharing
+
+    # # Print the results
+    # print(f"The closest solution to x* is from the {closest_solution} method.")
+    # print(f"Solution: {closest_value}")
+    # print(f"Distance to x*: {min_distance}")
