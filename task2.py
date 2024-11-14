@@ -1,8 +1,8 @@
 # 15 125
 # Կազմել ծրագիր, որը գրադիենտի պրոյեկտման մեթոդով կիրականացնի f(x)=1/2(Ax, x) + (b, x) 
-# քառակուսային ֆունկցիայի մինիմիզացիան 1-ին քառորդում, շրջանագծի վրա և ուղանկյունանիստի վրա։ 
+# քառակուսային ֆունկցիայի մինիմիզացիան շրջանագծի վրա, ուղղանկյան վրա և ուղանկյունանիստի վրա։ 
 # L հաստատունը վերցնել A մատրիցի նորմը, ուժեղ ուռուցիկության teta հաստատունը վերցնել 
-# մատրիցի մինիմալ սեթական արժեքը, իսկ ak=2*teta/L^2 : Կանգառի քայլ համարել 
+# մատրիցի մինիմալ սե3ական արժեքը, իսկ ak=2*teta/L^2 : Կանգառի քայլ համարել 
 # ||x^(k+1) - x^k||<epsilon0 պայմանը, որտեղ epsilon0>0 նախապես տրված ճշտություն է։
 
 import numpy as np
@@ -80,14 +80,20 @@ if __name__ == "__main__":
     A = np.array([[2, 0], [0, 2]])  # Example positive definite matrix A
     b = np.array([-2, -5])           # Example linear term b
     x0 = np.array([0.5, 0.5])        # Initial guess
-    radius = 1.0                     # Circle radius for projection
-    rect_min = np.array([0, 0])      # Rectangle minimum
-    rect_max = np.array([1, 1])      # Rectangle maximum
+    r = 1.0                     # Circle radius for projection
+    min = np.array([0, 0])      # Rectangle minimum
+    max = np.array([1, 1])      # Rectangle maximum
+
+    optimal_x_redius, optimal_value_redius = gradient_projection_method(A, b, x0, r)
+    print("Optimal x (redius):", optimal_x_redius)
+    print("Optimal value of f(x) (redius):", optimal_value_redius)
+    print("...........................................................")
 
     # Call the optimization function for 2D case
-    optimal_x, optimal_value = gradient_projection_method(A, b, x0, radius, rect_min, rect_max)
+    optimal_x, optimal_value = gradient_projection_method(A, b, x0, rect_min=min, rect_max=max)
     print("Optimal x (2D):", optimal_x)
     print("Optimal value of f(x) (2D):", optimal_value)
+    print("...........................................................")
 
     # Example usage for 3D case:
     A_3d = np.array([[2, 0, 0], [0, 2, 0], [0, 0, 2]])  # 3D positive definite matrix
@@ -103,3 +109,4 @@ if __name__ == "__main__":
     optimal_x_3d, optimal_value_3d = gradient_projection_method(A_3d, b_3d, x0_3d, prism_bounds=prism_bounds)
     print("Optimal x (3D):", optimal_x_3d)
     print("Optimal value of f(x) (3D):", optimal_value_3d)
+    print("...........................................................")
