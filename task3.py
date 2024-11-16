@@ -58,7 +58,7 @@ def conditional_gradient_method(A, b, C, d, epsilon_0, max_iter=1000):
     print("Max iterations reached.")
     return x_k
 
-def input_matrix(n):
+def input_matrix_A(n):
     print(f"Enter the values for a {n}x{n} matrix (row by row):")
     A = []
     for i in range(n):
@@ -97,18 +97,58 @@ def is_positive_semi_definite(matrix):
     except np.linalg.LinAlgError:
         return False
 
+def input_matrix_C(m, n):
+    # print(f"Please enter the {m}x{n} matrix, with {m} rows and {n} columns.")
+    # print(f"Enter the values row by row, separated by spaces.")
+
+    matrix = []
+
+    for i in range(m):
+        while True:
+            try:
+                row_input = input(f"Enter row {i + 1} (space-separated values): ")
+                row = list(map(float, row_input.strip().split()))
+
+                if len(row) != n:
+                    print(f"Error: You must enter exactly {n} values for row {i + 1}. Try again.")
+                    continue
+
+                matrix.append(row)
+                break
+            except ValueError:
+                print("Error: Please enter valid numbers separated by spaces.")
+    
+    return np.array(matrix)
+
+def input_vector(n):
+    print(f"Enter the values for a vector of length {n} (negative values allowed):")
+    while True:
+        try:
+            # Split input into a list of floats
+            vector = list(map(float, input("Vector: ").split()))
+            # Check if the length matches the expected size
+            if len(vector) != n:
+                print(f"Error: The vector must contain exactly {n} elements.")
+                continue
+            # Return the vector as a numpy array
+            return np.array(vector)
+        except ValueError:
+            # Handle non-numeric input
+            print("Error: Please enter valid numerical values.")
+
 
 if __name__ == "__main__":
-    n = 5
-    m = 3
     n = int(input("Enter the size of the matrix A (n): "))
-    A = input_matrix(n)  # User inputs the matrix
-    # A = np.random.randn(n, n)
-    A = A.T @ A  # Make A symmetric positive definite
-    b = np.random.randn(n)
-    C = np.random.randn(m, n)
-    d = np.random.randn(m)
+    A = input_matrix_A(n)  # User inputs the matrix
+
+    m = int(input("Enter the dimension m of the matrix C: "))
+    C = input_matrix_C(n, m)
+
+    b = input_vector(n)
+
+    # ?
+    # d = np.random.randn(m)
 
     epsilon_0 = 1e-6
-    x_opt = conditional_gradient_method(A, b, C, d, epsilon_0)
-    print("Optimal solution:", x_opt)
+    # x_opt = conditional_gradient_method(A, b, C, d, epsilon_0)
+    # print("Optimal solution:", x_opt)
