@@ -1,7 +1,7 @@
 # էջ 114
 # Կազմել ծրագիր, որը իրականացնում է f(x)=1/2(Ax, a) = (b, x) 
 # ֆունկցիայի մինիմիզացիան M = {x պատկանում է R^n | Cx <= d, x >= 0} 
-# բազմության վրա պայմանական գրադիենտի եթոդով։ Այնտեղ A-ն (nxn) 
+# բազմության վրա պայմանական գրադիենտի մեթոդով։ Այնտեղ A-ն (nxn) 
 # չափանի սիմետրիկ դրական որոշյալ մատրից է, իսկ C-ն (mxn) չափանի մատրից է։ 
 # k-րդ քայլում օգտագործելով սիմպլեքս ալգորիթմը՝ ստանալ ettak = min(f'(x^k), x-x^k) 
 # խնդրի որևէ լուծում։ Ալգորիթմի կանգառի համար ընդունել |ettak|<epsilon0 պայմանը, 
@@ -58,10 +58,52 @@ def conditional_gradient_method(A, b, C, d, epsilon_0, max_iter=1000):
     print("Max iterations reached.")
     return x_k
 
+def input_matrix(n):
+    print(f"Enter the values for a {n}x{n} matrix (row by row):")
+    A = []
+    for i in range(n):
+        while True:
+            try:
+                row = list(map(float, input(f"Row {i + 1}: ").split()))
+                if len(row) != n:
+                    print(f"Error: Row {i + 1} must contain exactly {n} elements.")
+                    continue
+                A.append(row)
+                break
+            except ValueError:
+                print("Error: Please enter valid numerical values.")
+    
+    A = np.array(A)
+    print("Entered Matrix A:")
+    print(A)
+
+    if not is_symmetric(A):
+        print("The matrix is not symmetric. Please ensure A[i,j] == A[j,i].")
+        exit()
+    
+    if not is_positive_semi_definite(A):
+        print("The matrix is not positive semi-definite. Please check the values entered.")
+        exit()
+    
+    return A
+
+def is_symmetric(matrix):
+    return np.array_equal(matrix, matrix.T)
+
+def is_positive_semi_definite(matrix):
+    try:
+        np.linalg.cholesky(matrix)
+        return True
+    except np.linalg.LinAlgError:
+        return False
+
+
 if __name__ == "__main__":
     n = 5
     m = 3
-    A = np.random.randn(n, n)
+    n = int(input("Enter the size of the matrix A (n): "))
+    A = input_matrix(n)  # User inputs the matrix
+    # A = np.random.randn(n, n)
     A = A.T @ A  # Make A symmetric positive definite
     b = np.random.randn(n)
     C = np.random.randn(m, n)
