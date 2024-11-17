@@ -1,15 +1,14 @@
-# էջ 114
-# Կազմել ծրագիր, որը իրականացնում է f(x)=1/2(Ax, a) = (b, x) 
-# ֆունկցիայի մինիմիզացիան M = {x պատկանում է R^n | Cx <= d, x >= 0} 
-# բազմության վրա պայմանական գրադիենտի մեթոդով։ Այնտեղ A-ն (nxn) 
-# չափանի սիմետրիկ դրական որոշյալ մատրից է, իսկ C-ն (mxn) չափանի մատրից է։ 
-# k-րդ քայլում օգտագործելով սիմպլեքս ալգորիթմը՝ ստանալ ettak = min(f'(x^k), x-x^k) 
-# խնդրի որևէ լուծում։ Ալգորիթմի կանգառի համար ընդունել |ettak|<epsilon0 պայմանը, 
-# որտեղ epsilon0>0 նախապես տրված ճշտություն է։ Եթե նշված պայմանը կատարվում է, 
-# ապա x^k վեկտորը համարել խնդրի լուծում և ավարտել ալգորիթմը։ Սկզբնական x^0 
-# պատկանում է M կետի ընտրությունը նույնպես կատարել սիմպլեքս ալգորիթմով։
-
-
+# # էջ 114
+# # Կազմել ծրագիր, որը իրականացնում է f(x)=1/2(Ax, a) = (b, x) 
+# # ֆունկցիայի մինիմիզացիան M = {x պատկանում է R^n | Cx <= d, x >= 0} 
+# # բազմության վրա պայմանական գրադիենտի մեթոդով։ Այնտեղ A-ն (nxn) 
+# # չափանի սիմետրիկ դրական որոշյալ մատրից է, իսկ C-ն (mxn) չափանի մատրից է։ 
+# # k-րդ քայլում օգտագործելով սիմպլեքս ալգորիթմը՝ ստանալ ettak = min(f'(x^k), x-x^k) 
+# # խնդրի որևէ լուծում։ Ալգորիթմի կանգառի համար ընդունել |ettak|<epsilon0 պայմանը, 
+# # որտեղ epsilon0>0 նախապես տրված ճշտություն է։ Եթե նշված պայմանը կատարվում է, 
+# # ապա x^k վեկտորը համարել խնդրի լուծում և ավարտել ալգորիթմը։ Սկզբնական x^0 
+# # պատկանում է M կետի ընտրությունը նույնպես կատարել սիմպլեքս ալգորիթմով։
+# # x^(k+1) = x^k + alfak*h^k
 
 import numpy as np
 from scipy.optimize import linprog
@@ -27,39 +26,42 @@ def simplex_method(grad, C, d):
     if result.success:
         return result.x
     else:
-        raise ValueError(f"Linear programming (Simplex) did not converge or is infeasible. {result.message}")
+        raise ValueError(f"Linear programming (Simplex) did not converge: {result.message}")
 
 def conditional_gradient_method(A, b, C, d, epsilon_0, max_iter=1000):
     n = len(b)
-    x_k = np.zeros(n)
-
-    # Check if A is positive definite
-    eigenvalues = np.linalg.eigvals(A)
-    if np.any(eigenvalues <= 0):
-        print("Warning: A is not positive definite.")
     
-    # Check if initial x_k satisfies Cx <= d
-    if np.any(np.dot(C, x_k) > d):
-        print("Initial x_k does not satisfy the constraints. Adjusting x_k.")
-        x_k = np.maximum(np.dot(np.linalg.pinv(C), d), 0)  # Adjust to feasible point
-    
+    x_k = simplex_method(np.zeros(n), C, d)
     print(f"Initial feasible x_k: {x_k}")
     
-    for k in range(max_iter):
+    k = 0
+    while k < max_iter:
         grad = gradient(A, b, x_k)
+        
         x_star = simplex_method(grad, C, d)
-        eta_k = np.dot(grad, x_star - x_k) / np.dot(grad, grad)
-        x_k = x_k + eta_k * (x_star - x_k)
-
+        
+        h_k = x_star - x_k
+        eta_k = np.dot(grad, h_k)
+        
         if abs(eta_k) < epsilon_0:
             print(f"Converged after {k+1} iterations.")
-            return x_k
-    
+            return k + 1, x_k
+        
+        alpha_k = 1.0
+        while f(x_k + alpha_k * h_k, A, b) > f(x_k, A, b) + epsilon_0 * alpha_k * eta_k:
+            alpha_k *= 0.5
+        
+        x_k = x_k + alpha_k * h_k
+        k += 1
+
     print("Max iterations reached.")
-    return x_k
+    return k, x_k 
+
+def f(x, A, b):
+    return 0.5 * np.dot(x.T, np.dot(A, x)) - np.dot(b.T, x)
 
 def input_matrix_A(n):
-    print(f"Enter the values for a {n}x{n} matrix (row by row):")
+    print(f"Enter the values for a {n}x{n} symmetric positive definite matrix A:")
     A = []
     for i in range(n):
         while True:
@@ -74,23 +76,20 @@ def input_matrix_A(n):
                 print("Error: Please enter valid numerical values.")
     
     A = np.array(A)
-    print("Entered Matrix A:")
-    print(A)
-
     if not is_symmetric(A):
         print("The matrix is not symmetric. Please ensure A[i,j] == A[j,i].")
         exit()
     
-    if not is_positive_semi_definite(A):
-        print("The matrix is not positive semi-definite. Please check the values entered.")
+    if not is_positive_definite(A):
+        print("The matrix is not positive definite. Please check the values entered.")
         exit()
     
     return A
 
 def is_symmetric(matrix):
-    return np.array_equal(matrix, matrix.T)
+    return np.allclose(matrix, matrix.T)
 
-def is_positive_semi_definite(matrix):
+def is_positive_definite(matrix):
     try:
         np.linalg.cholesky(matrix)
         return True
@@ -98,57 +97,47 @@ def is_positive_semi_definite(matrix):
         return False
 
 def input_matrix_C(m, n):
-    # print(f"Please enter the {m}x{n} matrix, with {m} rows and {n} columns.")
-    # print(f"Enter the values row by row, separated by spaces.")
-
-    matrix = []
-
+    print(f"Enter the values for a {m}x{n} constraint matrix C:")
+    C = []
     for i in range(m):
         while True:
             try:
-                row_input = input(f"Enter row {i + 1} (space-separated values): ")
-                row = list(map(float, row_input.strip().split()))
-
+                row = list(map(float, input(f"Row {i + 1}: ").split()))
                 if len(row) != n:
-                    print(f"Error: You must enter exactly {n} values for row {i + 1}. Try again.")
+                    print(f"Error: Row {i + 1} must contain exactly {n} elements.")
                     continue
-
-                matrix.append(row)
+                C.append(row)
                 break
             except ValueError:
-                print("Error: Please enter valid numbers separated by spaces.")
-    
-    return np.array(matrix)
+                print("Error: Please enter valid numerical values.")
+    return np.array(C)
 
-def input_vector(n):
-    print(f"Enter the values for a vector of length {n} (negative values allowed):")
+def input_vector(length, name="vector"):
+    print(f"Enter the values for the {name} of length {length}:")
     while True:
         try:
-            # Split input into a list of floats
-            vector = list(map(float, input("Vector: ").split()))
-            # Check if the length matches the expected size
-            if len(vector) != n:
-                print(f"Error: The vector must contain exactly {n} elements.")
+            vector = list(map(float, input(f"{name}: ").split()))
+            if len(vector) != length:
+                print(f"Error: The {name} must contain exactly {length} elements.")
                 continue
-            # Return the vector as a numpy array
             return np.array(vector)
         except ValueError:
-            # Handle non-numeric input
             print("Error: Please enter valid numerical values.")
 
-
 if __name__ == "__main__":
+    # Input dimensions and matrices
     n = int(input("Enter the size of the matrix A (n): "))
-    A = input_matrix_A(n)  # User inputs the matrix
+    A = input_matrix_A(n)
+    b = input_vector(n, name="b vector")
 
-    m = int(input("Enter the dimension m of the matrix C: "))
-    C = input_matrix_C(n, m)
+    m = int(input("Enter the number of constraints (m): "))
+    C = input_matrix_C(m, n)
+    d = input_vector(m, name="d vector")
 
-    b = input_vector(n)
-
-    # ?
-    # d = np.random.randn(m)
-
-    epsilon_0 = 1e-6
-    # x_opt = conditional_gradient_method(A, b, C, d, epsilon_0)
-    # print("Optimal solution:", x_opt)
+    epsilon_0 = float(input("Enter the precision (epsilon_0): "))
+    max_iter = int(input("Enter the maximum number of iterations: "))
+    
+    # Run the conditional gradient method
+    step_count, x_opt = conditional_gradient_method(A, b, C, d, epsilon_0, max_iter)
+    print("Optimal solution:", x_opt)
+    print("Number of iterations:", step_count)
