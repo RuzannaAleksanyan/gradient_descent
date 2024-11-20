@@ -1,18 +1,20 @@
-# # էջ 114
-# # Կազմել ծրագիր, որը իրականացնում է f(x)=1/2(Ax, a) = (b, x) 
-# # ֆունկցիայի մինիմիզացիան M = {x պատկանում է R^n | Cx <= d, x >= 0} 
-# # բազմության վրա պայմանական գրադիենտի մեթոդով։ Այնտեղ A-ն (nxn) 
-# # չափանի սիմետրիկ դրական որոշյալ մատրից է, իսկ C-ն (mxn) չափանի մատրից է։ 
-# # k-րդ քայլում օգտագործելով սիմպլեքս ալգորիթմը՝ ստանալ ettak = min(f'(x^k), x-x^k) 
-# # խնդրի որևէ լուծում։ Ալգորիթմի կանգառի համար ընդունել |ettak|<epsilon0 պայմանը, 
-# # որտեղ epsilon0>0 նախապես տրված ճշտություն է։ Եթե նշված պայմանը կատարվում է, 
-# # ապա x^k վեկտորը համարել խնդրի լուծում և ավարտել ալգորիթմը։ Սկզբնական x^0 
-# # պատկանում է M կետի ընտրությունը նույնպես կատարել սիմպլեքս ալգորիթմով։
-# # x^(k+1) = x^k + alfak*h^k
+# էջ 114
+# Կազմել ծրագիր, որը իրականացնում է f(x)=1/2(Ax, a) = (b, x) 
+# ֆունկցիայի մինիմիզացիան M = {x պատկանում է R^n | Cx <= d, x >= 0} 
+# բազմության վրա պայմանական գրադիենտի մեթոդով։ Այնտեղ A-ն (nxn) 
+# չափանի սիմետրիկ դրական որոշյալ մատրից է, իսկ C-ն (mxn) չափանի մատրից է։ 
+# k-րդ քայլում օգտագործելով սիմպլեքս ալգորիթմը՝ ստանալ ettak = min(f'(x^k), x-x^k) 
+# խնդրի որևէ լուծում։ Ալգորիթմի կանգառի համար ընդունել |ettak|<epsilon0 պայմանը, 
+# որտեղ epsilon0>0 նախապես տրված ճշտություն է։ Եթե նշված պայմանը կատարվում է, 
+# ապա x^k վեկտորը համարել խնդրի լուծում և ավարտել ալգորիթմը։ Սկզբնական x^0 
+# պատկանում է M կետի ընտրությունը նույնպես կատարել սիմպլեքս ալգորիթմով։
+# x^(k+1) = x^k + alfak*h^k
+# alfak֊ն ընտրում ենք կիսման եղանակով
 
 import numpy as np
 from scipy.optimize import linprog
 
+# f(x) = 1/2 (Ax, x) - (b, x)
 def gradient(A, b, x):
     return np.dot(A, x) - b
 
@@ -21,6 +23,7 @@ def simplex_method(grad, C, d):
     bounds = [(0, None)] * len(c)
     A_ub = C
     b_ub = d
+
     result = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds, method='highs')
 
     if result.success:
@@ -31,8 +34,8 @@ def simplex_method(grad, C, d):
 def conditional_gradient_method(A, b, C, d, epsilon_0, max_iter=1000):
     n = len(b)
     
+    # Initialize x^0 using the Simplex method
     x_k = simplex_method(np.zeros(n), C, d)
-    print(f"Initial feasible x_k: {x_k}")
     
     k = 0
     while k < max_iter:
@@ -43,14 +46,17 @@ def conditional_gradient_method(A, b, C, d, epsilon_0, max_iter=1000):
         h_k = x_star - x_k
         eta_k = np.dot(grad, h_k)
         
+        # Stopping criterion
         if abs(eta_k) < epsilon_0:
             print(f"Converged after {k+1} iterations.")
             return k + 1, x_k
         
+        # Perform line search to find alpha_k
         alpha_k = 1.0
         while f(x_k + alpha_k * h_k, A, b) > f(x_k, A, b) + epsilon_0 * alpha_k * eta_k:
             alpha_k *= 0.5
         
+        # Update x^k
         x_k = x_k + alpha_k * h_k
         k += 1
 
