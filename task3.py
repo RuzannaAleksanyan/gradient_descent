@@ -19,22 +19,25 @@ def gradient(A, b, x):
     return np.dot(A, x) - b
 
 def simplex_method(grad, C, d):
-    c = grad
-    bounds = [(0, None)] * len(c)
+    c = -grad  # Change to `c = grad` if minimizing
+    
+    bounds = [(0, None)] * len(c)  # Non-negative bounds
+    
     A_ub = C
     b_ub = d
-
+    
     result = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds, method='highs')
-
+    
     if result.success:
-        return result.x
+        return result.x  # Optimal solution
     else:
         raise ValueError(f"Linear programming (Simplex) did not converge: {result.message}")
 
-def conditional_gradient_method(A, b, C, d, epsilon_0, max_iter=1000):
+
+def conditional_gradient_method(A, b, C, d, epsilon_0=1e-6, max_iter=1000):
     n = len(b)
     
-    # Initialize x^0 using the Simplex method
+    # # Initialize x^0 using the Simplex method
     x_k = simplex_method(np.zeros(n), C, d)
     
     k = 0
@@ -48,7 +51,6 @@ def conditional_gradient_method(A, b, C, d, epsilon_0, max_iter=1000):
         
         # Stopping criterion
         if abs(eta_k) < epsilon_0:
-            print(f"Converged after {k+1} iterations.")
             return k + 1, x_k
         
         # Perform line search to find alpha_k
@@ -139,11 +141,8 @@ if __name__ == "__main__":
     m = int(input("Enter the number of constraints (m): "))
     C = input_matrix_C(m, n)
     d = input_vector(m, name="d vector")
-
-    epsilon_0 = float(input("Enter the precision (epsilon_0): "))
-    max_iter = int(input("Enter the maximum number of iterations: "))
     
     # Run the conditional gradient method
-    step_count, x_opt = conditional_gradient_method(A, b, C, d, epsilon_0, max_iter)
+    step_count, x_opt = conditional_gradient_method(A, b, C, d)
     print("Optimal solution:", x_opt)
     print("Number of iterations:", step_count)
